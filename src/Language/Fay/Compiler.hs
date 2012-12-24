@@ -271,16 +271,18 @@ getGhcPackageDbFlag = do
 -- | Compile Haskell module.
 compileModule :: Module -> Compile [JsStmt]
 compileModule (Module _ modulename _pragmas Nothing exports imports decls) = do
-  modify $ \s -> s { stateModuleName = modulename
-                   , stateExportAll = isNothing exports
-                   , stateExports = []
-                   }
-  imported <- fmap concat (mapM (compileImport . translateModuleName) imports)
-  current <- compileDecls True decls
-  -- If an export list is given we populate it beforehand,
-  -- if not then bindToplevel will export each declaration when it's visited.
-  mapM_ emitExport (fromMaybe [] exports)
-  return (imported ++ current)
+  echo $ "Compiling module: " ++ prettyPrint modulename
+  indent $ do
+    modify $ \s -> s { stateModuleName = modulename
+                     , stateExportAll = isNothing exports
+                     , stateExports = []
+                     }
+    imported <- fmap concat (mapM (compileImport . translateModuleName) imports)
+    current <- compileDecls True decls
+    -- If an export list is given we populate it beforehand,
+    -- if not then bindToplevel will export each declaration when it's visited.
+    mapM_ emitExport (fromMaybe [] exports)
+    return (imported ++ current)
 compileModule mod = throwError (UnsupportedModuleSyntax mod)
 
 translateModuleName :: ImportDecl -> ImportDecl
@@ -366,14 +368,32 @@ compileImportWithFilter name filter =
             return stmts
           Left err -> throwError err
 
-
 -- | Add the new scopes to the old one, stripping out local bindings.
 mergeScopes :: Map Name [NameScope] -> Map Name [NameScope] -> Map Name [NameScope]
 mergeScopes old new =
   M.map (filter (/=ScopeBinding))
         (foldr (\(key,val) -> M.insertWith (++) key val) old (M.assocs new))
 
--- | Add
+compileImport decl@(ImportDecl _ name False _ Nothing Nothing Nothing) = do
+  echo $ "Importing: " ++ prettyPrint name
+  names <- gets stateScope
+--  echo $ "Current scope: " ++ show names
+  indent $ do
+    unlessImported name $ \filepath contents -> do
+      state <- gets id
+      result <- liftIO $ compileToAst filepath state compileModule contents
+      case result of
+        Right (stmts,state) -> do
+          modify $ \s -> s { stateFayToJs  = stateFayToJs state
+                           , stateJsToFay  = stateJsToFay state
+                           , stateImported = stateImported s
+                           , stateScope    = addExportsToScope (stateExports state) (stateScope s)
+                           }
+          return stmts
+        Left err -> throwError err
+compileImport i = throwError $ UnsupportedImport i
+
+-- | Add exported names to the given module scope.
 addExportsToScope :: [QName] -> Map Name [NameScope] -> Map Name [NameScope]
 addExportsToScope exports mapping = foldr copy mapping exports where
   copy e =

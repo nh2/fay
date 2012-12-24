@@ -15,7 +15,7 @@ import           Data.List
 import qualified Data.Map                     as M
 import           Data.Maybe
 import           Data.String
-import           Language.Haskell.Exts        (ParseResult(..))
+import           Language.Haskell.Exts        (ParseResult(..),prettyPrint)
 import           Language.Haskell.Exts.Syntax
 import           Prelude                      hiding (exp)
 import           System.IO
@@ -51,14 +51,17 @@ stmtsThunk stmts = JsNew JsThunk [JsFun [] stmts Nothing]
 uniqueNames :: [JsName]
 uniqueNames = map JsParam [1::Integer ..]
 
--- | Resolve a given maybe-qualified name to a fully qualifed name.
 resolveName :: QName -> Compile QName
-resolveName special@Special{} = return special
-resolveName (UnQual name) = do
---  let echo = io . putStrLn
---  echo $ "Resolving name " ++ prettyPrint name
+resolveName name = do
+  qname <- resolveName' name
+  echo $ "Resolving name: " ++ prettyPrint name ++ " → " ++ prettyPrint qname
+  return qname
+
+-- | Resolve a given maybe-qualified name to a fully qualifed name.
+resolveName' :: QName -> Compile QName
+resolveName' special@Special{} = return special
+resolveName' (UnQual name) = do
   names <- gets stateScope
---  echo $ "Names are: " ++ show names
   case M.lookup name names of
     -- Unqualified and not imported? Current module.
     Nothing -> qualify name
@@ -77,7 +80,7 @@ resolveName (UnQual name) = do
         localBinding ScopeBinding = True
         localBinding _ = False
 
-resolveName (Qual modulename name) = do
+resolveName' (Qual modulename name) = do
   names <- gets stateScope
   case M.lookup name names of
     -- Qualified and not imported? It's correct, leave it as-is.
@@ -108,10 +111,13 @@ qualify name = do
 -- | Make a top-level binding.
 bindToplevel :: SrcLoc -> Bool -> Name -> JsExp -> Compile JsStmt
 bindToplevel srcloc toplevel name expr = do
+  echo $ "Binding " ++ (if toplevel then "toplevel " else "") ++ "name: " ++ prettyPrint name
   qname <- (if toplevel then qualify else return . UnQual) name
   exportAll <- gets stateExportAll
   -- If exportAll is set this declaration has not been added to stateExports yet.
-  when (toplevel && exportAll) $ emitExport (EVar qname)
+  when (toplevel && exportAll) $ do
+    echo $ "Exporting: " ++ prettyPrint qname
+    emitExport (EVar qname)
   return (JsMappedVar srcloc (JsNameVar qname) expr)
 
 -- | Create a temporary scope and discard it after the given computation.
@@ -257,3 +263,19 @@ typeToFields typ = do
   allrecs <- gets stateRecords
   typerecs <- typeToRecs typ
   return . concatMap snd . filter ((`elem` typerecs) . fst) $ allrecs
+
+-- | Print out some debug text.
+echo :: String -> Compile ()
+echo str = do
+  i <- gets statePrintIndent
+  forM_ (lines str) (liftIO . write . (replicate i ' ' ++))
+
+  where write _ = return ()
+
+-- | Indent the debug text (useful for expressing nested computations).
+indent :: Compile a -> Compile a
+indent m = do
+  modify $ \s -> s { statePrintIndent = statePrintIndent s + 2 }
+  r <- m
+  modify $ \s -> s { statePrintIndent = statePrintIndent s - 2 }
+  return r

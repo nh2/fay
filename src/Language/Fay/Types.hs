@@ -107,6 +107,7 @@ data CompileState = CompileState
   , stateImported    :: [(ModuleName,FilePath)]
   , stateNameDepth   :: Integer
   , stateScope       :: Map Name [NameScope]
+  , statePrintIndent :: Int
 } deriving (Show)
 
 -- | A name's scope, either imported or bound locally.
@@ -138,6 +139,7 @@ defaultCompileState config = do
   , stateNameDepth = 1
   , stateFilePath = "<unknown>"
   , stateScope = M.fromList primOps
+  , statePrintIndent = 0
   }
 
 -- | The built-in operations that aren't actually compiled from
