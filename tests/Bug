@@ -2,3 +2,4 @@ C.hs:foo: OK
 B.hs:bar: OK
 A.hs:zot: OK
 C.hs:zot: OK
+Bug.hs:same: OK
