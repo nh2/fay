@@ -272,6 +272,7 @@ data JsStmt
 data JsExp
   = JsName JsName
   | JsRawExp String
+  | JsSeq [JsExp]
   | JsFun [JsName] [JsStmt] (Maybe JsExp)
   | JsLit JsLit
   | JsApp JsExp [JsExp]

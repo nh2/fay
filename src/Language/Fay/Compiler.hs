@@ -12,16 +12,16 @@
 -- | The Haskell→Javascript compiler.
 
 module Language.Fay.Compiler
-  (runCompile
-  ,compileViaStr
-  ,compileForDocs
-  ,compileToAst
-  ,compileModule
-  ,compileExp
-  ,compileDecl
-  ,printCompile
-  ,printTestCompile
-  ,compileToplevelModule)
+  -- (runCompile
+  -- ,compileViaStr
+  -- ,compileForDocs
+  -- ,compileToAst
+  -- ,compileModule
+  -- ,compileExp
+  -- ,compileDecl
+  -- ,printCompile
+  -- ,printTestCompile
+  -- ,compileToplevelModule)
   where
 
 import           Language.Fay.Compiler.FFI
@@ -94,6 +94,35 @@ compileToAst filepath reader state with from =
              (parseResult (throwError . uncurry ParseError)
                           with
                           (parseFay filepath from))
+
+-- | Compile a Haskell source string to a JavaScript source string.
+compileTestAst :: (Show from,Show to,CompilesTo from to)
+             => CompileConfig
+             -> (from -> Compile to)
+             -> String
+             -> IO ()
+compileTestAst cfg with from = do
+  state <- defaultCompileState
+  reader <- defaultCompileReader cfg
+  out <- runCompile reader
+             state
+             (parseResult (throwError . uncurry ParseError)
+                          with
+                          (parseFay "<interactive>" from))
+  case out of
+    Left err -> error $ show err
+    Right (ok,_) -> print ok
+
+debug compile string = do
+  putStrLn "AST:\n"
+  compileTestAst c compile string
+  putStrLn ""
+  putStrLn "JS (unoptimized):\n"
+  printCompile def { configTypecheck = False } compile string
+  putStrLn "JS (optimized):\n"
+  printCompile c compile string
+
+  where c = def { configOptimize = True, configTypecheck = False }
 
 -- | Parse some Fay code.
 parseFay :: Parseable ast => FilePath -> String -> ParseResult ast
