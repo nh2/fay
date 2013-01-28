@@ -21,11 +21,12 @@ resolvePackages config = do
 resolvePackage :: CompileConfig -> String -> IO CompileConfig
 resolvePackage config name = do
   desc <- describePackage (configPackageConf config) name
-  case shareDirs desc of
+  dirs <- shareDirs desc
+  case dirs of
     Nothing -> error $ "unable to find share dir of package: " ++ name
-    Just dirs -> do
-      mapM_ checkDirExists dirs
-      return (addConfigDirectoryIncludes dirs config)
+    Just ds -> do
+      mapM_ checkDirExists ds
+      return (addConfigDirectoryIncludes ds config)
 
 -- | Describe package with ghc-pkg.
 --
@@ -85,25 +86,35 @@ describePackage db name = do
 --   do this better, because I've got better things to be doing, like
 --   climbing trees, baking cookies and reading books about zombies.
 --
-shareDirs :: String -> Maybe [FilePath]
+shareDirs :: String -> IO (Maybe [FilePath])
 shareDirs desc =
   case find (isPrefixOf "import-dirs: ") (lines desc) of
-    Nothing -> Nothing
+    Nothing -> return Nothing
     Just idirs ->
       case words idirs of
         -- I'm going to take the first one. If you've got more, just,
         -- I hate you.
-        (_import_dirs:idir:_) -> Just $ [munge idir
-                                        ,munge idir </> "src"] -- Yep.
-        _ -> Nothing
+        (_import_dirs:idir:_) -> do
+          exists1 <- doesFileExist $ munge swap1 idir
+          -- First we try to get the normal path which looks something like share/pkgid
+          -- But HP on OS X defaults to /lib/pkgid/share so lets try that too.
+          -- If your cabal config is even crazier, you need to patch fay to read the config or something.
+          return $ if exists1
+            then Just [munge swap1 idir, munge swap1 idir </> "src"]
+            else Just [munge swap2 idir, munge swap2 idir </> "src"]
+        _ -> return Nothing
 
-  where munge = joinPath . reverse . swap . dropGhc . reverse . map dropTrailingPathSeparator . splitPath where
-          dropGhc = drop 1
-          swap (name_version:"lib":rest) = name_version : "share" : rest
-          swap paths = error $ "unable to complete munging of the lib dir\
-                               \, see Language.Fay.Compiler.Packages.hs \
-                               \for an explanation: " ++
-                               "\npath was: " ++ joinPath paths
+  where
+    munge f = joinPath . reverse . f . dropGhc . reverse . map dropTrailingPathSeparator . splitPath
+    dropGhc = drop 1
+    swap1 (name_version:"lib":rest) = name_version : "share" : rest
+    swap1 paths = err paths
+    swap2 (name_version:"lib":rest) = "share" : name_version : "lib" : rest
+    swap2 paths = err paths
+    err paths = error $ "unable to complete munging of the lib dir\
+                         \, see Language.Fay.Compiler.Packages.hs \
+                         \for an explanation: " ++
+                           "\npath was: " ++ joinPath paths
 
 -- | Might as well check the dir that we munged to death actually
 --   exists. -___ -
