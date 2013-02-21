@@ -48,7 +48,7 @@ case_stateRecordTypes = do
         (M.fromList [ (UnQual (Ident "T"),[UnQual (Symbol ":+")])
         , (UnQual (Ident "R"),[UnQual (Ident "R"), UnQual (Ident "S")])
         ])
-        (stateRecordTypes r)
+        (recordTypesTest . stateRecordTypes $ r)
 
 case_importStateRecordTypes :: Assertion
 case_importStateRecordTypes = do
@@ -62,7 +62,7 @@ case_importStateRecordTypes = do
         (M.fromList [ (UnQual (Ident "T"),[UnQual (Symbol ":+")])
         , (UnQual (Ident "R"),[UnQual (Ident "R"), UnQual (Ident "S")])
         ])
-        (stateRecordTypes r)
+        (recordTypesTest . stateRecordTypes $ r)
 
 case_typecheckCPP :: Assertion
 case_typecheckCPP = do

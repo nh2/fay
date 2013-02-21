@@ -92,7 +92,7 @@ scanDecl decl = do
 
   where
     addRecordTypeState name cons = modify $ \s -> s
-      { stateRecordTypes = M.insert (UnQual name) (map UnQual cons) (stateRecordTypes s) }
+      { stateRecordTypes = addRecordType name cons (stateRecordTypes s) }
 
     conDeclName (ConDecl n _) = n
     conDeclName (InfixConDecl _ n _) = n
@@ -117,4 +117,4 @@ dataDecl constructors = do
   where
     addRecordState :: Name -> [Name] -> Compile ()
     addRecordState name fields = modify $ \s -> s
-      { stateRecords = M.insert (UnQual name) (map UnQual fields) (stateRecords s) }
+      { stateRecords = addRecord name fields (stateRecords s) }

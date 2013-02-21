@@ -123,7 +123,7 @@ emitExport spec = case spec of
   EVar q@Qual{} -> modify $ addCurrentExport q
   EThingAll (UnQual name) -> do
     emitVar name
-    r <- M.lookup (UnQual name) <$> gets stateRecords
+    r <- gets (recordFields name . stateRecords)
     maybe (return ()) (mapM_ (emitVar . unQName)) r
   EThingWith (UnQual name) ns -> do
     emitVar name
@@ -229,14 +229,14 @@ printSrcLoc SrcLoc{..} = srcFilename ++ ":" ++ show srcLine ++ ":" ++ show srcCo
 
 -- | Lookup the record for a given type name.
 typeToRecs :: QName -> Compile [QName]
-typeToRecs typ = fromMaybe [] . M.lookup typ <$> gets stateRecordTypes
+typeToRecs typ = gets (typeToRecs' (qname2name typ) . stateRecordTypes)
 
 -- | Get the fields for a given type.
 typeToFields :: QName -> Compile [QName]
 typeToFields typ = do
-  allrecs <- gets stateRecords
-  typerecs <- typeToRecs typ
-  return . concatMap snd . filter ((`elem` typerecs) . fst) $ M.toList allrecs
+  types <- gets stateRecordTypes
+  recs <- gets stateRecords
+  return $ typeToFields' (qname2name typ) types recs
 
 -- | Get the flag used for GHC, this differs between GHC-7.6.0 and
 -- GHC-everything-else so we need to specially test for that. It's
@@ -336,3 +336,7 @@ parseMode = defaultParseMode
                  ,RecordWildCards
                  ,NamedFieldPuns]
   }
+
+qname2name :: QName -> Name
+qname2name (UnQual n) = n
+qname2name (Qual _ n) = n

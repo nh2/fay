@@ -283,8 +283,7 @@ compileRecConstr name fieldUpdates = do
           exp <- compileExp value
           return [JsSetProp (JsNameVar o) (JsNameVar field) exp]
         updateStmt name FieldWildcard = do
-          records <- liftM stateRecords get
-          let fields = fromJust (M.lookup name records)
+          fields <- fromMaybe [] <$> gets (recordFields (qname2name name) . stateRecords)
           return (map (\fieldName -> JsSetProp (JsNameVar name)
                                                (JsNameVar fieldName)
                                                (JsName (JsNameVar fieldName)))

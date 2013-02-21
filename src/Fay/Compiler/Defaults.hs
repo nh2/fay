@@ -32,8 +32,8 @@ defaultCompileState = do
   return $ CompileState {
     _stateExports = M.empty
   , stateModuleName = ModuleName "Main"
-  , stateRecordTypes = M.empty
-  , stateRecords = M.empty
+  , stateRecordTypes = def
+  , stateRecords = def
   , stateImported = [("Fay.Types",types)]
   , stateNameDepth = 1
   , stateLocalScope = S.empty

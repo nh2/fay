@@ -59,8 +59,8 @@ compilePatFields exp name pats body = do
                    : r -- TODO: think about this force call
 
         compilePats' names (PFieldWildcard:xs) = do
-          records <- liftM stateRecords get
-          let fields = fromJust (M.lookup name records)
+          records <- gets stateRecords
+          let fields = fromJust (recordFields (qname2name name) records)
               fields' = fields \\ names
           f <- mapM (\fieldName -> do bindVar (unQual fieldName)
                                       return (JsVar (JsNameVar fieldName)
@@ -114,7 +114,7 @@ compilePApp cons pats exp body = do
     "False" -> boolIf False
     -- Everything else, generic:
     _ -> do
-      rf <- fmap (M.lookup cons) (gets stateRecords)
+      rf <- gets (recordFields (qname2name cons) . stateRecords)
       let recordFields =
             fromMaybe
               (error $ "Constructor '" ++ prettyPrint cons ++
