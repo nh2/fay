@@ -15,6 +15,7 @@ import           Control.Monad.Error
 import           Control.Monad.IO
 import           Control.Monad.RWS
 import           Data.List
+import qualified Data.Map                        as M
 import           Data.Maybe
 import qualified Data.Set                        as S
 import           Data.String
@@ -122,7 +123,7 @@ emitExport spec = case spec of
   EVar q@Qual{} -> modify $ addCurrentExport q
   EThingAll (UnQual name) -> do
     emitVar name
-    r <- lookup (UnQual name) <$> gets stateRecords
+    r <- M.lookup (UnQual name) <$> gets stateRecords
     maybe (return ()) (mapM_ (emitVar . unQName)) r
   EThingWith (UnQual name) ns -> do
     emitVar name
@@ -228,14 +229,14 @@ printSrcLoc SrcLoc{..} = srcFilename ++ ":" ++ show srcLine ++ ":" ++ show srcCo
 
 -- | Lookup the record for a given type name.
 typeToRecs :: QName -> Compile [QName]
-typeToRecs typ = fromMaybe [] . lookup typ <$> gets stateRecordTypes
+typeToRecs typ = fromMaybe [] . M.lookup typ <$> gets stateRecordTypes
 
 -- | Get the fields for a given type.
 typeToFields :: QName -> Compile [QName]
 typeToFields typ = do
   allrecs <- gets stateRecords
   typerecs <- typeToRecs typ
-  return . concatMap snd . filter ((`elem` typerecs) . fst) $ allrecs
+  return . concatMap snd . filter ((`elem` typerecs) . fst) $ M.toList allrecs
 
 -- | Get the flag used for GHC, this differs between GHC-7.6.0 and
 -- GHC-everything-else so we need to specially test for that. It's

@@ -15,6 +15,8 @@ import Data.List
 import Data.Maybe
 import Language.Haskell.Exts
 
+import qualified Data.Map as M
+
 -- | Compile the given pattern against the given expression.
 compilePat :: JsExp -> Pat -> [JsStmt] -> Compile [JsStmt]
 compilePat exp pat body =
@@ -58,7 +60,7 @@ compilePatFields exp name pats body = do
 
         compilePats' names (PFieldWildcard:xs) = do
           records <- liftM stateRecords get
-          let fields = fromJust (lookup name records)
+          let fields = fromJust (M.lookup name records)
               fields' = fields \\ names
           f <- mapM (\fieldName -> do bindVar (unQual fieldName)
                                       return (JsVar (JsNameVar fieldName)
@@ -112,7 +114,7 @@ compilePApp cons pats exp body = do
     "False" -> boolIf False
     -- Everything else, generic:
     _ -> do
-      rf <- fmap (lookup cons) (gets stateRecords)
+      rf <- fmap (M.lookup cons) (gets stateRecords)
       let recordFields =
             fromMaybe
               (error $ "Constructor '" ++ prettyPrint cons ++

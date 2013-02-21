@@ -17,6 +17,8 @@ import Control.Monad.RWS
 import Data.Maybe
 import Language.Haskell.Exts
 
+import qualified Data.Map as M
+
 -- | Compile Haskell expression.
 compileExp :: Exp -> Compile JsExp
 compileExp exp =
@@ -282,7 +284,7 @@ compileRecConstr name fieldUpdates = do
           return [JsSetProp (JsNameVar o) (JsNameVar field) exp]
         updateStmt name FieldWildcard = do
           records <- liftM stateRecords get
-          let fields = fromJust (lookup name records)
+          let fields = fromJust (M.lookup name records)
           return (map (\fieldName -> JsSetProp (JsNameVar name)
                                                (JsNameVar fieldName)
                                                (JsName (JsNameVar fieldName)))

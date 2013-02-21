@@ -14,6 +14,8 @@ import Control.Monad.RWS
 import Language.Haskell.Exts.Syntax
 import Language.Haskell.Exts.Parser
 
+import qualified Data.Map as M
+
 -- | Collect all the records and their fields before compiling.
 collectRecords :: Module -> Compile ()
 collectRecords (Module _ _ _ Nothing _ imports decls) = do
@@ -90,7 +92,7 @@ scanDecl decl = do
 
   where
     addRecordTypeState name cons = modify $ \s -> s
-      { stateRecordTypes = (UnQual name, map UnQual cons) : stateRecordTypes s }
+      { stateRecordTypes = M.insert (UnQual name) (map UnQual cons) (stateRecordTypes s) }
 
     conDeclName (ConDecl n _) = n
     conDeclName (InfixConDecl _ n _) = n
@@ -115,4 +117,4 @@ dataDecl constructors = do
   where
     addRecordState :: Name -> [Name] -> Compile ()
     addRecordState name fields = modify $ \s -> s
-      { stateRecords = (UnQual name,map UnQual fields) : stateRecords s }
+      { stateRecords = M.insert (UnQual name) (map UnQual fields) (stateRecords s) }

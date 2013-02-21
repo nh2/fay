@@ -82,8 +82,8 @@ data CompileConfig = CompileConfig
 -- | State of the compiler.
 data CompileState = CompileState
   { _stateExports     :: Map ModuleName (Set QName) -- ^ Collects exports from modules
-  , stateRecordTypes  :: [(QName,[QName])]          -- ^ Map types to constructors
-  , stateRecords      :: [(QName,[QName])]          -- ^ Map constructors to fields
+  , stateRecordTypes  :: Map QName [QName]          -- ^ Map types to constructors
+  , stateRecords      :: Map QName [QName]          -- ^ Map constructors to fields
   , stateImported     :: [(ModuleName,FilePath)]    -- ^ Map of all imported modules and their source locations.
   , stateNameDepth    :: Integer                    -- ^ Depth of the current lexical scope.
   , stateLocalScope   :: Set Name                   -- ^ Names in the current lexical scope.

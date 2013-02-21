@@ -16,6 +16,8 @@ import Test.Framework.TH
 import Test.HUnit                     (Assertion, assertBool, assertEqual, assertFailure)
 import Test.Util
 
+import qualified Data.Map as M
+
 tests :: Test
 tests = $testGroupGenerator
 
@@ -43,9 +45,9 @@ case_stateRecordTypes = do
     Right (_,r) -> do
       -- TODO order should not matter
       assertEqual "stateRecordTypes mismatch"
-        [ (UnQual (Ident "T"),[UnQual (Symbol ":+")])
+        (M.fromList [ (UnQual (Ident "T"),[UnQual (Symbol ":+")])
         , (UnQual (Ident "R"),[UnQual (Ident "R"), UnQual (Ident "S")])
-        ]
+        ])
         (stateRecordTypes r)
 
 case_importStateRecordTypes :: Assertion
@@ -57,9 +59,9 @@ case_importStateRecordTypes = do
     Right (_,r) -> do
       -- TODO order should not matter
       assertEqual "stateRecordTypes mismatch"
-        [ (UnQual (Ident "T"),[UnQual (Symbol ":+")])
+        (M.fromList [ (UnQual (Ident "T"),[UnQual (Symbol ":+")])
         , (UnQual (Ident "R"),[UnQual (Ident "R"), UnQual (Ident "S")])
-        ]
+        ])
         (stateRecordTypes r)
 
 case_typecheckCPP :: Assertion
