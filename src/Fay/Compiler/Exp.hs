@@ -17,8 +17,6 @@ import Control.Monad.RWS
 import Data.Maybe
 import Language.Haskell.Exts
 
-import qualified Data.Map as M
-
 -- | Compile Haskell expression.
 compileExp :: Exp -> Compile JsExp
 compileExp exp =

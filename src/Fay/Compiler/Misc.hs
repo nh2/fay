@@ -15,7 +15,6 @@ import           Control.Monad.Error
 import           Control.Monad.IO
 import           Control.Monad.RWS
 import           Data.List
-import qualified Data.Map                        as M
 import           Data.Maybe
 import qualified Data.Set                        as S
 import           Data.String

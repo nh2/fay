@@ -15,8 +15,6 @@ import Data.List
 import Data.Maybe
 import Language.Haskell.Exts
 
-import qualified Data.Map as M
-
 -- | Compile the given pattern against the given expression.
 compilePat :: JsExp -> Pat -> [JsStmt] -> Compile [JsStmt]
 compilePat exp pat body =

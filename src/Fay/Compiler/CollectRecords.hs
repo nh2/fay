@@ -14,8 +14,6 @@ import Control.Monad.RWS
 import Language.Haskell.Exts.Syntax
 import Language.Haskell.Exts.Parser
 
-import qualified Data.Map as M
-
 -- | Collect all the records and their fields before compiling.
 collectRecords :: Module -> Compile ()
 collectRecords (Module _ _ _ Nothing _ imports decls) = do
