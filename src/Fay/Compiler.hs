@@ -166,21 +166,21 @@ imported is qn = anyM (matching qn) is
     matching (Qual _ _) (IAbs _) = return True -- Types are always OK
     matching (Qual _ name) (IVar var) = return $ name == var
     matching (Qual _ name) (IThingAll typ) = do
-      recs <- gets (typeToRecs' typ . stateRecordTypes)
+      recs <- gets (typeToRecs typ . stateRecordTypes)
       if UnQual name `elem` recs
         then return True
         else do
           (types, recs) <- gets (stateRecordTypes &&& stateRecords)
-          let fields = typeToFields' typ types recs
+          let fields = typeToFields typ types recs
           return $ UnQual name `elem` fields
     matching (Qual _ name) (IThingWith typ cns) =
       flip anyM cns $ \cn -> case cn of
         ConName _ -> do
-          recs <- gets (typeToRecs' typ . stateRecordTypes)
+          recs <- gets (typeToRecs typ . stateRecordTypes)
           return $ UnQual name `elem` recs
         VarName _ -> do
           (types, recs) <- gets (stateRecordTypes &&& stateRecords)
-          let fields = typeToFields' typ types recs
+          let fields = typeToFields typ types recs
           return $ UnQual name `elem` fields
     matching q is = error $ "compileImport: Unsupported QName ImportSpec combination " ++ show (q, is) ++ ", this is a bug!"
 

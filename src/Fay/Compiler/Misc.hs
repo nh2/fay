@@ -325,6 +325,7 @@ parseMode = defaultParseMode
                  ,NamedFieldPuns]
   }
 
+  -- TODO Remove
 qname2name :: QName -> Name
 qname2name (UnQual n) = n
 qname2name (Qual _ n) = n
