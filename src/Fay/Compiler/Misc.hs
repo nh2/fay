@@ -226,17 +226,6 @@ warn w = do
 printSrcLoc :: SrcLoc -> String
 printSrcLoc SrcLoc{..} = srcFilename ++ ":" ++ show srcLine ++ ":" ++ show srcColumn
 
--- | Lookup the record for a given type name.
-typeToRecs :: QName -> Compile [QName]
-typeToRecs typ = gets (typeToRecs' (qname2name typ) . stateRecordTypes)
-
--- | Get the fields for a given type.
-typeToFields :: QName -> Compile [QName]
-typeToFields typ = do
-  types <- gets stateRecordTypes
-  recs <- gets stateRecords
-  return $ typeToFields' (qname2name typ) types recs
-
 -- | Get the flag used for GHC, this differs between GHC-7.6.0 and
 -- GHC-everything-else so we need to specially test for that. It's
 -- lame, but that's random flag name changes for you.

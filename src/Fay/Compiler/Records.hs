@@ -30,9 +30,11 @@ instance Default RMap where
 recordFields :: Name -> RMap -> Maybe [QName]
 recordFields n (RMap m) = M.lookup (UnQual n) $ m
 
+--- | Look up the constructors for a type.
 typeToRecs' :: Name -> RTMap -> [QName]
 typeToRecs' n (RTMap m) = fromMaybe [] . M.lookup (UnQual n) $ m
 
+--- | Look up the fields for a type.
 typeToFields' :: Name -> RTMap -> RMap -> [QName]
 typeToFields' typ types records = do
   let (RMap allrecs) = records
