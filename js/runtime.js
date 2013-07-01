@@ -186,7 +186,6 @@ function Fay$$fayToJs(type,fayObj){
       fayObj = Fay$$_(fayObj.cdr);
     }
     jsObj = arr;
-
   }
   else if(base == "tuple") {
     // Serialize Fay tuple to JavaScript array.
@@ -228,12 +227,27 @@ function Fay$$fayToJs(type,fayObj){
   else if(base == "automatic" || base == "user") {
     if(fayObj instanceof Fay$$$)
       fayObj = Fay$$_(fayObj);
-    jsObj = Fay$$fayToJsUserDefined(type,fayObj);
 
+    if(fayObj instanceof Fay$$Cons){
+      // Serialize Fay list to JavaScript array.
+      var arr = [];
+      fayObj = Fay$$_(fayObj);
+      while(fayObj instanceof Fay$$Cons) {
+        arr.push(Fay$$fayToJs(["automatic"],fayObj.car));
+        fayObj = Fay$$_(fayObj.cdr);
+      }
+      jsObj = arr;
+    } else {
+      jsObj = Fay$$fayToJsUserDefined(type,fayObj);
+    }
   }
   else
     throw new Error("Unhandled Fay->JS translation type: " + base);
   return jsObj;
+}
+
+function listToArr(args, fayObj){
+
 }
 
 // Specialized serializer for string.
@@ -362,6 +376,13 @@ function Fay$$jsToFay(type,jsObj){
   else if(base == "automatic" || base == "user") {
     if (jsObj && jsObj['instance']) {
       fayObj = Fay$$jsToFayUserDefined(type,jsObj);
+    }
+    else if (jsObj instanceof Array) {
+      var list = null;
+      for (var i = jsObj.length - 1; i >= 0; i--) {
+        list = new Fay$$Cons(Fay$$jsToFay([base], jsObj[i]), list);
+      }
+      fayObj = list;
     }
     else
       fayObj = jsObj;
