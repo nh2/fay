@@ -109,8 +109,10 @@ compileToModule filepath config raw with hscode = do
           ,"var " ++ modulename ++ " = function(){"
           ,if configExportRuntime config then raw else ""
           ,jscode
-          ,"// Exports"
-          ,unlines (map printExport exports)
+          -- ,"// Exports"
+          -- ,unlines (map printExport exports)
+          ,"// Convenient exports"
+          ,unlines (map printConvenientExport exports)
           ,"// Built-ins"
           ,"this._ = Fay$$_;"
           ,if configExportBuiltins config
@@ -137,6 +139,12 @@ printExport name =
   printJSString (JsSetProp JsThis
                            (JsNameVar name)
                            (JsName (JsNameVar name)))
+
+-- | Print an this.x = x; export out.
+printConvenientExport :: QName -> String
+printConvenientExport qualName@(Qual _ (Ident name)) = printJSString (JsSetProp JsThis
+                                                                                (JsNameVar (UnQual (Ident name)))
+                                                                                (JsName (JsNameVar qualName)))
 
 -- | Convert a Haskell filename to a JS filename.
 toJsName :: String -> String
